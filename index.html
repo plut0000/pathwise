@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathwise — Find the path that fits you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070f;
+    --bg2:#070b18;
+    --ink:#eaf0ff;
+    --muted:#8a93ad;
+    --line:rgba(120,150,255,.14);
+    --blue:#4d7cff;
+    --blue-br:#6f9bff;
+    --cyan:#38bdf8;
+    --panel:rgba(255,255,255,.035);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Outfit',sans-serif;line-height:1.55;
+    -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;
+  }
+  /* atmosphere */
+  .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .grid{position:absolute;inset:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:54px 54px;mask-image:radial-gradient(circle at 50% 35%,#000 10%,transparent 75%);opacity:.5}
+  .glow{position:absolute;border-radius:50%;filter:blur(100px);opacity:.55}
+  .glow.a{width:560px;height:560px;background:radial-gradient(circle,rgba(77,124,255,.5),transparent 70%);top:-160px;left:50%;transform:translateX(-50%);animation:drift1 18s ease-in-out infinite}
+  .glow.b{width:420px;height:420px;background:radial-gradient(circle,rgba(56,189,248,.35),transparent 70%);bottom:-140px;right:-80px;animation:drift2 22s ease-in-out infinite}
+  @keyframes drift1{50%{transform:translate(-50%,60px) scale(1.12)}}
+  @keyframes drift2{50%{transform:translate(-40px,-50px) scale(1.08)}}
+  .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#9fc0ff;box-shadow:0 0 8px #6f9bff;animation:twinkle 4s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.15;transform:scale(.8)}50%{opacity:.9;transform:scale(1.2)}}
+
+  .app{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:30px 20px 70px;min-height:100vh;display:flex;flex-direction:column}
+
+  .brand{display:flex;align-items:center;gap:10px;font-family:'Sora';font-weight:800;font-size:21px;letter-spacing:-.02em}
+  .brand .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--cyan));position:relative;box-shadow:0 0 22px rgba(77,124,255,.6)}
+  .brand .mark::after{content:"";position:absolute;inset:7px 7px auto auto;width:6px;height:6px;border-radius:50%;background:#fff}
+
+  .screen{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .hidden{display:none!important}
+  .fade{animation:fade .5s var(--ease) both}
+  @keyframes fade{from{opacity:0;transform:translateY(16px)}}
+
+  /* HERO */
+  .hero{text-align:center;padding:40px 0}
+  .badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);
+    padding:7px 15px;border-radius:100px;font-size:13px;color:var(--muted);margin-bottom:26px}
+  .badge .d{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan)}
+  h1{font-family:'Sora';font-weight:800;font-size:clamp(40px,9vw,68px);line-height:1.02;letter-spacing:-.035em;margin-bottom:18px}
+  h1 .grad{background:linear-gradient(120deg,var(--blue-br),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);font-size:clamp(16px,2.4vw,20px);max-width:42ch;margin:0 auto 34px}
+
+  .btn{font-family:'Outfit';font-weight:600;font-size:16px;cursor:pointer;border:none;border-radius:100px;
+    padding:15px 32px;transition:transform .2s var(--ease),box-shadow .2s,opacity .2s;display:inline-flex;align-items:center;gap:9px}
+  .btn-primary{background:linear-gradient(120deg,var(--blue),var(--cyan));color:#04132e;box-shadow:0 10px 36px rgba(77,124,255,.35)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(77,124,255,.5)}
+  .btn-primary:disabled{opacity:.55;cursor:wait;transform:none}
+  .btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--blue);color:var(--blue-br)}
+
+  .mini{margin-top:22px;color:var(--muted);font-size:13px}
+
+  /* QUIZ */
+  .card{background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);
+    border-radius:26px;padding:30px 26px;backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,.4)}
+  .prog{height:6px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:6px}
+  .prog i{display:block;height:100%;width:0;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .5s var(--ease)}
+  .prog-label{color:var(--muted);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px}
+  .q-title{font-family:'Sora';font-weight:700;font-size:clamp(23px,4.5vw,32px);letter-spacing:-.02em;line-height:1.15;margin-bottom:6px}
+  .q-sub{color:var(--muted);font-size:14.5px;margin-bottom:22px}
+  .opts{display:flex;flex-wrap:wrap;gap:10px}
+  .opt{border:1px solid var(--line);background:rgba(255,255,255,.025);color:var(--ink);border-radius:14px;
+    padding:13px 17px;font-size:15px;font-weight:500;cursor:pointer;transition:all .18s var(--ease);user-select:none;display:flex;align-items:center;gap:9px}
+  .opt .em{font-size:17px}
+  .opt:hover{border-color:rgba(120,150,255,.4);background:rgba(77,124,255,.08)}
+  .opt.sel{border-color:var(--blue);background:rgba(77,124,255,.18);box-shadow:0 0 0 1px var(--blue) inset,0 6px 20px rgba(77,124,255,.2)}
+  .opt.sel::after{content:"✓";margin-left:2px;color:var(--cyan);font-weight:700}
+  textarea{width:100%;min-height:120px;background:rgba(255,255,255,.025);border:1px solid var(--line);color:var(--ink);
+    border-radius:16px;padding:16px;font-family:inherit;font-size:15px;resize:vertical;outline:none}
+  textarea:focus{border-color:var(--blue)}
+  textarea::placeholder{color:#5e668a}
+
+  .nav{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:12px}
+
+  /* LOADING */
+  .loading{text-align:center;padding:50px 0}
+  .orbit{width:74px;height:74px;margin:0 auto 26px;position:relative}
+  .orbit::before,.orbit::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid transparent}
+  .orbit::before{border-top-color:var(--blue);border-right-color:var(--cyan);animation:spin 1s linear infinite}
+  .orbit::after{inset:14px;border-bottom-color:var(--blue-br);animation:spin 1.6s linear infinite reverse}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading h2{font-family:'Sora';font-weight:700;font-size:24px;margin-bottom:8px}
+  .loading p{color:var(--muted);font-size:15px}
+
+  /* RESULTS */
+  .res-head{text-align:center;margin-bottom:28px}
+  .res-head .kick{color:var(--cyan);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+  .res-head h2{font-family:'Sora';font-weight:800;font-size:clamp(28px,5.5vw,40px);letter-spacing:-.03em;line-height:1.05}
+  .summary{color:var(--muted);font-size:16px;max-width:52ch;margin:14px auto 0}
+  .match{background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);
+    border-radius:22px;padding:24px;margin-bottom:16px;opacity:0;transform:translateY(20px);animation:rise .6s var(--ease) forwards}
+  @keyframes rise{to{opacity:1;transform:none}}
+  .match-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:4px}
+  .match h3{font-family:'Sora';font-weight:700;font-size:21px;letter-spacing:-.01em}
+  .match .field{color:var(--cyan);font-size:13px;font-weight:600;margin-top:2px}
+  .meter{flex-shrink:0;text-align:right}
+  .meter .pct{font-family:'Sora';font-weight:800;font-size:22px;background:linear-gradient(120deg,var(--blue-br),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .meter .bar{width:74px;height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:5px}
+  .meter .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+  .match .why{font-size:15px;margin:12px 0}
+  .match .snap{font-size:14px;color:var(--muted);font-style:italic;border-left:2px solid var(--blue);padding-left:12px;margin:12px 0}
+  .match .rows{display:grid;gap:8px;margin-top:14px;font-size:14px}
+  .match .row b{color:var(--blue-br);font-weight:600}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .tag{background:rgba(77,124,255,.12);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:4px 10px;font-size:12.5px}
+  .res-foot{text-align:center;margin-top:24px}
+  .errbox{text-align:center;color:var(--muted);padding:20px}
+
+  footer{position:relative;z-index:2;text-align:center;color:#4a5270;font-size:12px;padding:10px 0 4px}
+  /* hero + added sections */
+  #scHero{justify-content:flex-start}
+  #scHero .hero{min-height:calc(100vh - 70px);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:34px 0 50px}
+
+  /* career marquee */
+  .career-marquee{margin-top:40px;width:100vw;margin-left:calc(-50vw + 50%);overflow:hidden;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+    mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+  .cm-track{display:inline-flex;gap:12px;white-space:nowrap;animation:cm 38s linear infinite;padding-left:12px}
+  .cm-track span{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);
+    border-radius:100px;padding:9px 18px;font-size:14px;font-weight:500}
+  @keyframes cm{to{transform:translateX(-50%)}}
+
+  /* floating preview */
+  .hero-preview{position:relative;height:240px;margin-top:48px;display:flex;justify-content:center}
+  .hp-card{position:absolute;width:min(420px,90vw);text-align:left;border-radius:20px;padding:22px 24px;
+    background:linear-gradient(165deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid var(--line);
+    backdrop-filter:blur(10px)}
+  .hp-card.main{top:38px;z-index:2;box-shadow:0 30px 70px rgba(77,124,255,.28);animation:floatcard 6s ease-in-out infinite}
+  .hp-card.behind{top:0;transform:scale(.88) translate(34px,-12px) rotate(4deg);opacity:.45;z-index:1}
+  @keyframes floatcard{50%{transform:translateY(-14px)}}
+  .hp-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+  .hp-title{font-family:'Sora';font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .hp-field{color:var(--cyan);font-size:12.5px;font-weight:600;margin-top:2px}
+  .hp-pct{font-family:'Sora';font-weight:800;font-size:22px;background:linear-gradient(120deg,var(--blue-br),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hp-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.1);overflow:hidden}
+  .hp-bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+  .hp-why{font-size:14px;color:var(--ink);margin:14px 0 12px;line-height:1.5}
+  .hp-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .hp-tags span{background:rgba(77,124,255,.12);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12px}
+
+  .section{padding:68px 0;border-top:1px solid var(--line)}
+  .reveal{opacity:0;transform:translateY(30px);transition:opacity .7s var(--ease),transform .8s var(--ease)}
+  .reveal.in{opacity:1;transform:none}
+  .stat-head{text-align:center;font-family:'Sora';font-weight:700;font-size:clamp(23px,4.5vw,34px);letter-spacing:-.025em;margin-bottom:42px}
+  .stats-band{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+  @media(max-width:600px){.stats-band{grid-template-columns:1fr 1fr;gap:40px 18px}}
+  .stat .n{font-family:'Sora';font-weight:800;font-size:clamp(40px,8vw,62px);letter-spacing:-.035em;line-height:1;
+    background:linear-gradient(120deg,var(--blue-br),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{color:var(--muted);font-size:14px;margin-top:9px}
+  .what-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:680px){.what-grid{grid-template-columns:1fr}}
+  .wcard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px 24px;text-align:center;transition:transform .25s var(--ease),border-color .25s}
+  .wcard:hover{transform:translateY(-5px);border-color:rgba(120,150,255,.4)}
+  .wcard .wic{width:54px;height:54px;border-radius:15px;margin:0 auto 17px;display:grid;place-items:center;font-size:25px;background:rgba(77,124,255,.12);border:1px solid var(--line)}
+  .wcard h3{font-family:'Sora';font-weight:700;font-size:19px;margin-bottom:9px;letter-spacing:-.01em}
+  .wcard p{color:var(--muted);font-size:14.5px}
+  .hero-foot-cta{text-align:center;padding:50px 0 0}
+  .cta-line{font-family:'Sora';font-weight:700;font-size:clamp(22px,4vw,30px);letter-spacing:-.02em;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div class="bg">
+  <div class="grid"></div>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+</div>
+
+<div class="app">
+  <div class="brand"><span class="mark"></span>Pathwise</div>
+
+  <!-- HERO -->
+  <div class="screen" id="scHero">
+    <div class="hero fade">
+      <div class="badge"><span class="d"></span>Career discovery for students</div>
+      <h1>Find the path<br>that fits <span class="grad">you.</span></h1>
+      <p>Answer a few quick questions about what you love and what you're good at. Pathwise builds you a personalized list of careers worth exploring.</p>
+      <button class="btn btn-primary" id="startBtn">Start the quiz →</button>
+      <div class="mini">Takes ~2 minutes · No sign-up</div>
+
+      <div class="career-marquee">
+        <div class="cm-track">
+          <span>Software Developer</span><span>Marine Biologist</span><span>Architect</span><span>Game Designer</span><span>Doctor</span><span>Pilot</span><span>Data Scientist</span><span>Teacher</span><span>Civil Engineer</span><span>UX Designer</span><span>Entrepreneur</span><span>Psychologist</span>
+          <span>Software Developer</span><span>Marine Biologist</span><span>Architect</span><span>Game Designer</span><span>Doctor</span><span>Pilot</span><span>Data Scientist</span><span>Teacher</span><span>Civil Engineer</span><span>UX Designer</span><span>Entrepreneur</span><span>Psychologist</span>
+        </div>
+      </div>
+
+      <div class="hero-preview">
+        <div class="hp-card behind">
+          <div class="hp-top"><div class="hp-title">Aerospace Engineer</div><div class="hp-pct">90%</div></div>
+          <div class="hp-bar"><i style="width:90%"></i></div>
+        </div>
+        <div class="hp-card main">
+          <div class="hp-top">
+            <div><div class="hp-title">Software Developer</div><div class="hp-field">Technology</div></div>
+            <div class="hp-pct">94%</div>
+          </div>
+          <div class="hp-bar"><i style="width:94%"></i></div>
+          <div class="hp-why">Your love of coding and problem-solving points straight here — your projects are already a head start.</div>
+          <div class="hp-tags"><span>Computer science</span><span>Math</span><span>Logic</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <section class="section reveal">
+      <div class="stat-head">What Pathwise does</div>
+      <div class="stats-band">
+        <div class="stat"><div class="n" data-to="6">0</div><div class="l">quick questions</div></div>
+        <div class="stat"><div class="n" data-to="2" data-suffix=" min">0 min</div><div class="l">to your matches</div></div>
+        <div class="stat"><div class="n" data-to="5">0</div><div class="l">careers matched</div></div>
+        <div class="stat"><div class="n" data-to="100" data-suffix="%">0%</div><div class="l">personalized</div></div>
+      </div>
+    </section>
+
+    <!-- WHAT IT DOES -->
+    <section class="section reveal">
+      <div class="what-grid">
+        <div class="wcard"><div class="wic">🧭</div><h3>Answer honestly</h3><p>Six quick questions about what you love, how you like to work, and what you're good at.</p></div>
+        <div class="wcard"><div class="wic">✨</div><h3>Get matched</h3><p>Pathwise weighs your answers and finds careers that actually fit who you are.</p></div>
+        <div class="wcard"><div class="wic">🚀</div><h3>Explore paths</h3><p>Every match shows why it fits, a day in the life, and how to get there from school.</p></div>
+      </div>
+      <div class="hero-foot-cta">
+        <div class="cta-line">Ready to find yours?</div>
+        <button class="btn btn-primary" id="startBtn2">Start the quiz →</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="screen hidden" id="scQuiz">
+    <div class="card fade">
+      <div class="prog"><i id="progBar"></i></div>
+      <div class="prog-label" id="progLabel">Question 1</div>
+      <div class="q-title" id="qTitle"></div>
+      <div class="q-sub" id="qSub"></div>
+      <div id="qBody"></div>
+      <div class="nav">
+        <button class="btn btn-ghost" id="backBtn">← Back</button>
+        <button class="btn btn-primary" id="nextBtn">Next →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="screen hidden" id="scLoad">
+    <div class="loading fade">
+      <div class="orbit"></div>
+      <h2>Mapping your path…</h2>
+      <p id="loadMsg">Matching your answers to careers</p>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen hidden" id="scResults">
+    <div class="res-head fade">
+      <div class="kick">Your matches</div>
+      <h2>Careers worth<br>exploring</h2>
+      <p class="summary" id="resSummary"></p>
+    </div>
+    <div id="resList"></div>
+    <div class="res-foot">
+      <button class="btn btn-ghost" id="restartBtn">↺ Start over</button>
+    </div>
+  </div>
+</div>
+
+<footer>Pathwise · Built to help you explore, not decide for you.</footer>
+
+<script>
+  /* stars */
+  (function(){
+    const bg=document.querySelector('.bg');
+    for(let i=0;i<26;i++){
+      const s=document.createElement('div');s.className='star';
+      s.style.left=Math.random()*100+'%';s.style.top=Math.random()*100+'%';
+      s.style.animationDelay=(Math.random()*4)+'s';s.style.opacity=Math.random()*.6+.2;
+      bg.appendChild(s);
+    }
+  })();
+
+  /* ---- questions ---- */
+  const QS=[
+    {key:'subjects',type:'multi',title:'Which subjects light you up?',sub:'Pick all that apply.',
+     opts:[['📐','Math'],['🔬','Science'],['💻','Tech & coding'],['✍️','English & writing'],['🌍','History & society'],['🎨','Art & design'],['💼','Business & money'],['🗣️','Languages'],['🩺','Health & PE'],['🔧','Hands-on / building']]},
+    {key:'work',type:'multi',title:'How do you like to work?',sub:'Pick all that feel like you.',
+     opts:[['🧘','Solo & focused'],['🤝','On a team'],['🎯','Leading the room'],['🛠️','Hands-on & physical'],['💡','With big ideas'],['❤️','Helping people directly']]},
+    {key:'values',type:'multi',title:'What do you want from a career?',sub:'Choose what matters most.',
+     opts:[['💰','Good money'],['🌱','Help others'],['🎨','Be creative'],['🏛️','Stability'],['🧭','Adventure & variety'],['🕊️','Freedom'],['🏗️','Build things'],['⭐','Influence']]},
+    {key:'strengths',type:'multi',title:"What are you naturally good at?",sub:'Be honest — pick your real strengths.',
+     opts:[['🧩','Solving problems'],['💬','Communicating'],['🔩','Building / fixing'],['🗂️','Organizing'],['🎤','Persuading'],['🖌️','Creating'],['📊','Analyzing data'],['🤲','Caring for people'],['🎭','Performing']]},
+    {key:'place',type:'single',title:'Where do you want to spend your days?',sub:'Pick one.',
+     opts:[['🏢','Mostly indoors'],['🌲','Mostly outdoors'],['🔄','A mix of both']]},
+    {key:'extra',type:'text',title:'Anything else about you?',sub:'Optional — a dream, a hobby, a subject you love. The more you share, the better the matches.',
+     placeholder:"e.g. I love building Roblox games, I'm into planes and cruise ships, and I want to travel…"}
+  ];
+
+  const answers={};
+  QS.forEach(q=>answers[q.key]= q.type==='text' ? '' : (q.type==='single'?null:[]));
+  let step=0;
+
+  const $=id=>document.getElementById(id);
+  function show(id){['scHero','scQuiz','scLoad','scResults'].forEach(s=>$(s).classList.toggle('hidden',s!==id));}
+
+  function renderStep(){
+    const q=QS[step];
+    $('progBar').style.width=((step)/(QS.length))*100+'%';
+    $('progLabel').textContent=`Question ${step+1} of ${QS.length}`;
+    $('qTitle').textContent=q.title;
+    $('qSub').textContent=q.sub;
+    const body=$('qBody');
+    if(q.type==='text'){
+      body.innerHTML=`<textarea id="ta" placeholder="${q.placeholder||''}"></textarea>`;
+      $('ta').value=answers[q.key];
+      $('ta').addEventListener('input',e=>answers[q.key]=e.target.value);
+    } else {
+      body.innerHTML='<div class="opts">'+q.opts.map((o,i)=>{
+        const label=o[1], em=o[0];
+        const sel=(q.type==='single'?answers[q.key]===label:answers[q.key].includes(label));
+        return `<div class="opt${sel?' sel':''}" data-l="${label}"><span class="em">${em}</span>${label}</div>`;
+      }).join('')+'</div>';
+      body.querySelectorAll('.opt').forEach(el=>{
+        el.addEventListener('click',()=>{
+          const l=el.dataset.l;
+          if(q.type==='single'){
+            answers[q.key]=l;
+            body.querySelectorAll('.opt').forEach(x=>x.classList.toggle('sel',x===el));
+          } else {
+            const arr=answers[q.key];const idx=arr.indexOf(l);
+            if(idx>-1)arr.splice(idx,1);else arr.push(l);
+            el.classList.toggle('sel');
+          }
+        });
+      });
+    }
+    $('backBtn').style.visibility = step===0 ? 'hidden':'visible';
+    $('nextBtn').textContent = step===QS.length-1 ? 'See my matches ✨' : 'Next →';
+  }
+
+  $('startBtn').onclick=()=>{show('scQuiz');step=0;renderStep();};
+  const start2=$('startBtn2'); if(start2) start2.onclick=()=>{show('scQuiz');step=0;renderStep();};
+  $('backBtn').onclick=()=>{if(step>0){step--;renderStep();}};
+  $('nextBtn').onclick=()=>{
+    if(step<QS.length-1){step++;renderStep();}
+    else generate();
+  };
+  $('restartBtn').onclick=()=>{location.reload();};
+
+  /* ---- reveal + count-up on the landing ---- */
+  const revObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');revObs.unobserve(e.target);}}),{threshold:.18});
+  document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+  function countUp(el){
+    const to=parseFloat(el.dataset.to), sfx=el.dataset.suffix||'', dec=(to%1!==0)?1:0;
+    let s=null;
+    function step(t){if(!s)s=t;const p=Math.min((t-s)/1300,1);const e=1-Math.pow(1-p,3);
+      el.textContent=(to*e).toFixed(dec)+sfx;if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  }
+  const cObs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){countUp(e.target);cObs.unobserve(e.target);}}),{threshold:.6});
+  document.querySelectorAll('.stat .n').forEach(el=>cObs.observe(el));
+
+  /* ---- Claude-powered results ---- */
+  async function askClaude(messages,system){
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,system,messages})
+    });
+    if(!res.ok) throw new Error("fail");
+    const data=await res.json();
+    return data.content.filter(b=>b.type==='text').map(b=>b.text).join("\n").trim();
+  }
+  const stripJSON=t=>t.replace(/```json|```/g,'').trim();
+
+  const loadMsgs=["Matching your answers to careers","Weighing your strengths","Finding paths that fit","Almost there…"];
+  function cycleLoad(){let i=0;return setInterval(()=>{i=(i+1)%loadMsgs.length;$('loadMsg').textContent=loadMsgs[i];},1400);}
+
+  async function generate(){
+    show('scLoad');
+    const timer=cycleLoad();
+    const profile=
+      `Subjects they enjoy: ${answers.subjects.join(', ')||'—'}\n`+
+      `How they like to work: ${answers.work.join(', ')||'—'}\n`+
+      `What they want from a career: ${answers.values.join(', ')||'—'}\n`+
+      `Natural strengths: ${answers.strengths.join(', ')||'—'}\n`+
+      `Work setting: ${answers.place||'—'}\n`+
+      `In their words: ${answers.extra||'(none)'}`;
+    try{
+      const raw=await askClaude(
+        [{role:"user",content:
+          "A high-school student filled out a career quiz. Recommend careers for them.\n\n"+profile+
+          "\n\nReturn ONLY valid JSON (no markdown, no preamble) shaped exactly like:\n"+
+          '{"summary":"2 warm, specific sentences about who they are based on their answers","matches":[{"title":"Job title","field":"broad field","match":92,"why":"2 sentences on why it fits THEM, referencing their answers","snapshot":"one vivid day-in-the-life sentence","path":"how to get there starting from high school","subjects":["subject/skill","..."]}]}\n'+
+          "Give 5 matches, varied across different fields, sorted by match descending (realistic 78-96 range). Be specific and encouraging, not generic."}],
+        "You are a sharp, encouraging high-school career counselor. You give realistic, specific, age-appropriate guidance and you output ONLY valid JSON.");
+      const data=JSON.parse(stripJSON(raw));
+      renderResults(data);
+    }catch(e){
+      clearInterval(timer);
+      show('scResults');
+      $('resSummary').textContent='';
+      $('resList').innerHTML='<div class="errbox">💡 Pathwise builds your matches using a live connection to Claude. That works when this page is opened inside Claude. Try again, or run it from there to see your personalized careers.</div>';
+    }
+    clearInterval(timer);
+  }
+
+  function renderResults(data){
+    show('scResults');
+    $('resSummary').textContent=data.summary||'';
+    const list=$('resList');list.innerHTML='';
+    (data.matches||[]).forEach((m,i)=>{
+      const el=document.createElement('div');el.className='match';el.style.animationDelay=(i*0.09)+'s';
+      const tags=(m.subjects||[]).map(s=>`<span class="tag">${s}</span>`).join('');
+      el.innerHTML=`
+        <div class="match-top">
+          <div><h3>${m.title}</h3><div class="field">${m.field||''}</div></div>
+          <div class="meter"><div class="pct">${m.match}%</div><div class="bar"><i style="width:${m.match}%"></i></div></div>
+        </div>
+        <div class="why">${m.why||''}</div>
+        ${m.snapshot?`<div class="snap">${m.snapshot}</div>`:''}
+        <div class="rows">
+          ${m.path?`<div class="row"><b>How to get there:</b> ${m.path}</div>`:''}
+          ${tags?`<div class="row"><b>Focus on:</b><div class="tags">${tags}</div></div>`:''}
+        </div>`;
+      list.appendChild(el);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
